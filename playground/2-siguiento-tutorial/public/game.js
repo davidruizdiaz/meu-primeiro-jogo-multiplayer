@@ -9,6 +9,10 @@ export default function createGame() {
         }
     }
 
+    function setState( newState ) {
+        Object.assign( state, newState );
+    }
+
     function addPlayer( command ) {
         const { playerId, x, y } = command;
         state.players[ playerId ] = { x, y }
@@ -51,9 +55,7 @@ export default function createGame() {
         const player = state.players[ playerId ];    
         for (const fruitId in state.fruits) {
             const fruit = state.fruits[ fruitId ];
-            console.log( player, fruit )
             if ( player.x === fruit.x && player.y === fruit.y ) {
-                console.log('Collision!!');
                 removeFruit( { fruitId } );
             }
         }
@@ -63,5 +65,6 @@ export default function createGame() {
         movePlayer, state,
         addPlayer, removePlayer,
         addFruit, removeFruit,
+        setState,
     };
 }
