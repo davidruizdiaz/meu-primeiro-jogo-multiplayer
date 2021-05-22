@@ -12,21 +12,32 @@ const sockets = new io.Server( server );
 app.use( express.static( 'public' ) );
 
 const game = createGame();
-game.addFruit({ fruitId:'fruit1', x: 2, y:3 });
-game.addFruit({ fruitId:'fruit2', x: 5, y:8 });
-game.addFruit({ fruitId:'fruit3', x: 9, y:9 });
-game.addPlayer({ playerId:'player1', x: 4, y:8 });
+game.start();
 
-console.log( game.state );
+game.subscribe( ( command ) => {
+    sockets.emit( command.type, command );
+});
 
 sockets.on( 'connection', socket => {
     const playerId = socket.id;
-    console.log(`> Player connecting: ${ playerId }`);
-
+    
+    console.log( `>>> Entró: ${ playerId }` );
     game.addPlayer( { playerId } );
     
     // emite el estado del juego
     socket.emit( 'setup', game.state );
+
+    socket.on( 'disconnect', ()=>{
+        console.log( `<<< Salió: ${ playerId }` );
+        game.removePlayer( { playerId } );
+    });
+
+    socket.on( 'move-player', command => {
+        command.playerId = playerId;
+        command.type = 'move-player';
+        game.movePlayer( command );
+    });
+
 });
 
 server.listen( 3000, () => {

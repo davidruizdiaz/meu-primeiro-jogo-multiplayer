@@ -25,24 +25,59 @@
         import createGame from './game.js';
         import renderScreen from './render.js';
 
-        const screen = document.getElementById('screen'); 
         const game = createGame();
         const keyboardListener = createKeyboardListener( document );
-        // subcribe an observer
-        keyboardListener.subscribe( game.movePlayer );
-
-        renderScreen( screen, game, requestAnimationFrame );
-
+        
+        
         const socket = io();
-
-        socket.on( 'connect', () =>{
+        
+        socket.on( 'connect', () => {
             const playerId = socket.id;
             console.log(`Player conneting with id: ${ playerId }`);
+            
+            const screen = document.getElementById('screen'); 
+            renderScreen( screen, game, requestAnimationFrame, playerId );
         });
 
-        socket.on( 'setup', state =>{
+        socket.on( 'setup', state => {
             game.setState( state );
+
+            const playerId = socket.id;
+            keyboardListener.registerPlayerId( playerId );
+            // subcribe an observer
+            keyboardListener.subscribe( game.movePlayer );
+            keyboardListener.subscribe( command => {
+                socket.emit( 'move-player', command )
+            });
         });
+
+        socket.on( 'add-player', command => {
+            game.addPlayer( command );
+            console.log( `>>> Entró: ${ command.playerId }` );
+        });
+
+        
+        socket.on( 'rm-player', command => {
+            game.removePlayer( command );
+            console.log( `<<< Salió: ${ command.playerId }` );
+        });
+
+        socket.on( 'move-player', command => {
+            const playerId = socket.id;
+
+            if ( command.playerId !== playerId ) {
+                game.movePlayer( command );
+            }
+        });
+
+        socket.on( 'add-fruit', command => {
+            game.addFruit( command );
+        });
+
+        socket.on( 'rm-fruit', command => {
+            game.removeFruit( command );
+        });
+
     </script>
 </body>
 </html>
